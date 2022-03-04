@@ -182,6 +182,10 @@ class TelegramInput(InputChannel):
     @staticmethod
     def _is_edited_message(message: Update) -> bool:
         return message.edited_message is not None
+    
+    @staticmethod
+    def _is_image_message(message: Update) -> bool:
+        return message.message.content_type == "photo"
 
     @staticmethod
     def _is_button(message: Update) -> bool:
@@ -231,6 +235,15 @@ class TelegramInput(InputChannel):
                         text = '{{"lng":{0}, "lat":{1}}}'.format(
                             msg.location.longitude, msg.location.latitude
                         )
+                    elif self._is_image_message(update):
+                        bot = TeleBot(self.access_token)
+                        print('message.photo =', update.message.photo)
+                        fileID = update.message.photo[-1].file_id
+                        print('fileID =', fileID)
+                        file_info = bot.get_file(fileID)
+                        print('file.file_path =', file_info.file_path)
+                        file_url = f"https://api.telegram.org/file/bot{self.access_token}/{file_info.file_path}"
+                        text = file_url
                     else:
                         return response.text("success")
                 sender_id = msg.chat.id
