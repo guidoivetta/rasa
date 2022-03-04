@@ -86,7 +86,7 @@ def register(
     """Registers input channel blueprints with Sanic."""
 
     async def handler(message: UserMessage) -> None:
-        await app.ctx.agent.handle_message(message)
+        await app.agent.handle_message(message)
 
     for channel in input_channels:
         if route:
@@ -95,7 +95,7 @@ def register(
             p = None
         app.blueprint(channel.blueprint(handler), url_prefix=p)
 
-    app.ctx.input_channels = input_channels
+    app.input_channels = input_channels
 
 
 class InputChannel:
@@ -160,7 +160,8 @@ class InputChannel:
         Returns:
             Metadata which was extracted from the request.
         """
-        pass
+        metadata = request.json
+        return metadata
 
 
 def decode_jwt(bearer_token: Text, jwt_key: Text, jwt_algorithm: Text) -> Dict:
@@ -199,8 +200,6 @@ def decode_bearer_token(
         logger.error("JWT public key invalid.")
     except Exception:
         logger.exception("Failed to decode bearer token.")
-
-    return None
 
 
 class OutputChannel:
@@ -330,12 +329,10 @@ class CollectingOutputChannel(OutputChannel):
     (doesn't send them anywhere, just collects them)."""
 
     def __init__(self) -> None:
-        """Initialise list to collect messages."""
-        self.messages: List[Dict[Text, Any]] = []
+        self.messages = []
 
     @classmethod
     def name(cls) -> Text:
-        """Name of the channel."""
         return "collector"
 
     @staticmethod
